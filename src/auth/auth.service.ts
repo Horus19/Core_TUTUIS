@@ -13,7 +13,6 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
-import { MailService } from '../mail/mail.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import axios from 'axios';
 
@@ -25,7 +24,6 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailService,
   ) {}
 
   // Por defecto usuarios inactivos
@@ -177,6 +175,17 @@ export class AuthService {
       return true;
     } catch {
       return false;
+    }
+  }
+
+  async findUserById(id: string): Promise<User> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: { id },
+      });
+      return user;
+    } catch (e) {
+      this.handleError(e);
     }
   }
 }
