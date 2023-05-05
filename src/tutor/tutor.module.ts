@@ -10,5 +10,6 @@ import { AuthModule } from '../auth/auth.module';
   controllers: [TutorController],
   imports: [TypeOrmModule.forFeature([Tutor]), MateriaModule, AuthModule],
   providers: [TutorService],
+  exports: [TutorService],
 })
 export class TutorModule {}

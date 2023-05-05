@@ -27,13 +27,8 @@ export class Materia {
   })
   descripcion: string;
 
-  @Column('bool', { nullable: true })
+  @Column('bool', { nullable: true, default: true })
   activo: boolean;
-
-  @BeforeInsert()
-  setActivo() {
-    this.activo = true;
-  }
 
   @AfterInsert()
   logInsert() {

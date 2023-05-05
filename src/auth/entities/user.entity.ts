@@ -7,6 +7,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ValidRoles } from '../interfaces/valid-roles';
 
 @Entity('users')
 export class User {
@@ -32,7 +33,7 @@ export class User {
 
   @Column('text', {
     array: true,
-    default: ['user'],
+    default: [ValidRoles.ESTUDIANTE],
   })
   roles: string[];
 

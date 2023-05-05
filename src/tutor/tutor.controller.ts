@@ -5,8 +5,9 @@ import {
   Body,
   Patch,
   Param,
-  Delete, Query
-} from "@nestjs/common";
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';

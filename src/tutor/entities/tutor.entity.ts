@@ -32,4 +32,14 @@ export class Tutor {
     default: 0,
   })
   costoPorHora: number;
+
+  @Column('decimal', {
+    precision: 2,
+    scale: 1,
+    default: 0,
+  })
+  calificacion: number;
+
+  @Column('bool', { nullable: true, default: true })
+  activo: boolean;
 }

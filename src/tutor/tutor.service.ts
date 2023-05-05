@@ -7,6 +7,7 @@ import { Tutor } from './entities/tutor.entity';
 import { MateriaService } from '../materia/materia.service';
 import { AuthService } from '../auth/auth.service';
 import { TutorDto } from './dto/tutor-out.dto';
+import { ValidRoles } from '../auth/interfaces/valid-roles';
 
 @Injectable()
 export class TutorService {
@@ -21,11 +22,13 @@ export class TutorService {
       createTutorDto;
 
     const usuario = await this.authService.findUserById(usuarioId);
+    usuario.roles.push(ValidRoles.TUTOR);
 
     const materias = await this.materiaService.findByIds(materiasIds);
 
     const tutor = new Tutor();
     tutor.usuario = usuario;
+
     tutor.materias = materias;
     tutor.descripcion = descripcion;
     tutor.costoPorHora = costoPorHora;
@@ -42,6 +45,9 @@ export class TutorService {
         searchString: `%${searchString}%`,
       })
       .orWhere('materia.nombre LIKE :searchString', {
+        searchString: `%${searchString}%`,
+      })
+      .orWhere('materia.codigo LIKE :searchString', {
         searchString: `%${searchString}%`,
       })
       .getMany();
@@ -79,6 +85,17 @@ export class TutorService {
       })),
       costo: tutor.costoPorHora,
     };
+  }
+
+  // Metodo para encontar una entidad de tutor por su id
+  async findById(id: string): Promise<Tutor> {
+    const tutor = await this.tutorRepository.findOne({
+      where: { id },
+    });
+    if (!tutor) {
+      throw new NotFoundException(`Tutor with ID ${id} not found`);
+    }
+    return tutor;
   }
 
   update(id: number, updateTutorDto: UpdateTutorDto) {

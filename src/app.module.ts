@@ -8,6 +8,7 @@ import { LoggerFactory } from 'typeorm/logger/LoggerFactory';
 import { ConfigModule } from '@nestjs/config';
 import { MateriaModule } from './materia/materia.module';
 import { TutorModule } from './tutor/tutor.module';
+import { TutoriaModule } from './tutoria/tutoria.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { TutorModule } from './tutor/tutor.module';
     }),
     MateriaModule,
     TutorModule,
+    TutoriaModule,
   ],
   controllers: [AppController],
   providers: [AppService, LoggerFactory],
