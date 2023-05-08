@@ -188,4 +188,13 @@ export class AuthService {
       this.handleError(e);
     }
   }
+
+  async updateUser(user: User): Promise<User> {
+    try {
+      await this.userRepository.save(user);
+      return user;
+    } catch (e) {
+      this.handleError(e);
+    }
+  }
 }

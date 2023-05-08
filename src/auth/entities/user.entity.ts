@@ -4,10 +4,13 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  JoinColumn,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ValidRoles } from '../interfaces/valid-roles';
+import { Tutor } from '../../tutor/entities/tutor.entity';
 
 @Entity('users')
 export class User {
@@ -42,8 +45,10 @@ export class User {
   })
   validationToken: string;
 
-  // @OneToMany(() => Product, (product) => product.user)
-  // products: Product[];
+  @Column('bool', {
+    default: false,
+  })
+  isBlocked: boolean;
 
   @BeforeInsert()
   emailToLowerCase() {

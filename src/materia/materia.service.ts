@@ -12,11 +12,20 @@ export class MateriaService {
     @InjectRepository(Materia)
     private materiaRepository: MateriaRepository,
   ) {}
+
+  /**
+   * Crea una materia
+   * @param createMateriaDto
+   */
   async create(createMateriaDto: CreateMateriaDto): Promise<Materia> {
     const materia = this.materiaRepository.create(createMateriaDto);
     return await this.materiaRepository.save(materia);
   }
 
+  /**
+   * Obtiene todas las materias
+   * @returns Materia[]
+   */
   async findAll(): Promise<MateriaResponseDto[]> {
     const materias = await this.materiaRepository.find();
 
@@ -32,14 +41,30 @@ export class MateriaService {
     });
   }
 
+  /**
+   * Obtiene una materia por id
+   * @param id
+   * @returns Materia
+   */
   async findOne(id: string): Promise<Materia> {
     return await this.materiaRepository.findOne({ where: { id } });
   }
 
+  /**
+   * Obtiene una materia por nombre
+   * @param nombre
+   * @returns Materia
+   */
   async findOneByNombre(nombre: string): Promise<Materia> {
     return await this.materiaRepository.findOne({ where: { nombre } });
   }
 
+  /**
+   * Actualiza una materia
+   * @param id
+   * @param updateMateriaDto
+   * @returns Materia
+   */
   async update(id: string, updateMateriaDto: UpdateMateriaDto) {
     const materia = await this.materiaRepository.findOne({ where: { id } });
     if (!materia) {
@@ -49,10 +74,19 @@ export class MateriaService {
     return this.materiaRepository.save(updatedMateria);
   }
 
+  /**
+   * Elimina una materia
+   * @param id
+   */
   async remove(id: string) {
     return await this.materiaRepository.delete({ id });
   }
 
+  /**
+   * Obtiene materias por ids
+   * @param ids
+   * @returns Materia[]
+   */
   async findByIds(ids: string[]): Promise<Materia[]> {
     return await this.materiaRepository.findByIds(ids);
   }

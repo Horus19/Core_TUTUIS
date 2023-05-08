@@ -1,10 +1,4 @@
-import {
-  AfterInsert,
-  BeforeInsert,
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { AfterInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('materia')
 export class Materia {

@@ -10,8 +10,8 @@ import { User } from '../auth/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TutorService } from '../tutor/tutor.service';
 import { Tutor } from '../tutor/entities/tutor.entity';
-import { TutoriaEstado } from "./interfaces/estado-tutoria";
-import { MotivoRechazoDto } from "./dto/motivo-rechazo.dto";
+import { TutoriaEstado } from './interfaces/estado-tutoria';
+import { MotivoRechazoDto } from './dto/motivo-rechazo.dto';
 
 @Injectable()
 export class TutoriaService {
@@ -57,6 +57,7 @@ export class TutoriaService {
   /**
    * Acepta una solicitud de tutoria
    * @param tutoriaId
+   * @returns Tutoria
    */
   async acceptTutoria(tutoriaId: string) {
     const tutoria = await this.tutoriaRepository.findOne({
@@ -70,6 +71,7 @@ export class TutoriaService {
   /**
    * Rechaza una solicitud de tutoria
    * @param MotivoRechazoDto
+   * @returns Tutoria
    */
   async rechazarTutoria(motivoRechazoDto: MotivoRechazoDto) {
     const { tutoriaId, descripcion } = motivoRechazoDto;
@@ -84,19 +86,85 @@ export class TutoriaService {
 
   /**
    * Metodo para obtener todas las solicitudes de tutoria como tutor
+   * @param tutorId
+   * @returns Tutoria[]
    */
   async findAllTutoringRequestsByTutor(tutorId: string) {
     return this.tutoriaRepository.find({
-      where: { tutor: { id: tutorId } },
+      where: {
+        tutor: { id: tutorId },
+        estado: TutoriaEstado.PENDIENTE,
+      },
     });
   }
 
   /**
    * Metodo para obtener todas las solicitudes de tutoria como estudiante
+   * @param studentId
+   * @returns Tutoria[]
    */
   async findAllTutoringRequestsByStudent(studentId: string) {
     return this.tutoriaRepository.find({
-      where: { estudiante: { id: studentId } },
+      where: {
+        estudiante: { id: studentId },
+        estado: TutoriaEstado.PENDIENTE,
+      },
+    });
+  }
+
+  /**
+   * Metodo para obtener todas las tutorias completadas como tutor
+   * @param tutorId
+   * @returns Tutoria[]
+   */
+  async findAllCompletedTutoringByTutor(tutorId: string) {
+    return this.tutoriaRepository.find({
+      where: {
+        tutor: { id: tutorId },
+        estado: TutoriaEstado.COMPLETADA,
+      },
+    });
+  }
+
+  /**
+   * Metodo para obtener todas las tutorias activas como tutor
+   * @param tutorId
+   * @returns Tutoria[]
+   */
+  async findAllActiveTutoringByTutor(tutorId: string) {
+    return this.tutoriaRepository.find({
+      where: {
+        tutor: { id: tutorId },
+        estado: TutoriaEstado.ACEPTADA,
+      },
+    });
+  }
+
+  /**
+   * Metodo para obtener todas las tutorias activas como estudiante
+   * @param studentId
+   * @returns Tutoria[]
+   */
+  async findAllActiveTutoringByStudent(studentId: string) {
+    return this.tutoriaRepository.find({
+      where: {
+        estudiante: { id: studentId },
+        estado: TutoriaEstado.ACEPTADA,
+      },
+    });
+  }
+
+  /**
+   * Metodo para obtener todas las tutorias completadas como estudiante
+   * @param studentId
+   * @returns Tutoria[]
+   */
+  async findAllCompletedTutoringByStudent(studentId: string) {
+    return this.tutoriaRepository.find({
+      where: {
+        estudiante: { id: studentId },
+        estado: TutoriaEstado.COMPLETADA,
+      },
     });
   }
 

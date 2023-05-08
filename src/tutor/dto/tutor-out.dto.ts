@@ -10,4 +10,6 @@ export class TutorDto {
   materias: MateriaDto[];
 
   costo: number;
+
+  calificacion: number;
 }

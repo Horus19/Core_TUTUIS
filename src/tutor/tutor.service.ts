@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +13,9 @@ import { AuthService } from '../auth/auth.service';
 import { TutorDto } from './dto/tutor-out.dto';
 import { ValidRoles } from '../auth/interfaces/valid-roles';
 
+/**
+ * Servicio de tutor
+ */
 @Injectable()
 export class TutorService {
   constructor(
@@ -17,39 +24,53 @@ export class TutorService {
     private readonly materiaService: MateriaService,
     private readonly authService: AuthService,
   ) {}
-  async create(createTutorDto: CreateTutorDto): Promise<Tutor> {
+
+  /**
+   * Crea un perfil de tutor para un usuario
+   * @param createTutorDto
+   */
+  async create(createTutorDto: CreateTutorDto) {
     const { usuarioId, materiasIds, descripcion, costoPorHora } =
       createTutorDto;
+    try {
+      const usuario = await this.authService.findUserById(usuarioId);
+      usuario.roles.push(ValidRoles.TUTOR);
+      const materias = await this.materiaService.findByIds(materiasIds);
 
-    const usuario = await this.authService.findUserById(usuarioId);
-    usuario.roles.push(ValidRoles.TUTOR);
+      const tutor = new Tutor();
+      tutor.usuario = usuario;
 
-    const materias = await this.materiaService.findByIds(materiasIds);
-
-    const tutor = new Tutor();
-    tutor.usuario = usuario;
-
-    tutor.materias = materias;
-    tutor.descripcion = descripcion;
-    tutor.costoPorHora = costoPorHora;
-
-    return this.tutorRepository.save(tutor);
+      tutor.materias = materias;
+      tutor.descripcion = descripcion;
+      tutor.costoPorHora = costoPorHora;
+      await this.authService.updateUser(usuario);
+      return this.tutorRepository.save(tutor);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Internal Server Error ',
+        error.message,
+      );
+    }
   }
 
-  async findAll(searchString: string) {
+  /**
+   * Consulta todos los tutores diferentes al usuario que realiza la consulta
+   * @param searchString
+   * @param idUsuario
+   * @returns TutorDto[]
+   */
+  async findAll(searchString: string, idUsuario: string): Promise<TutorDto[]> {
     const tutors = await this.tutorRepository
       .createQueryBuilder('tutor')
       .leftJoinAndSelect('tutor.materias', 'materia')
       .leftJoinAndSelect('tutor.usuario', 'usuario')
-      .where('usuario.fullName LIKE :searchString', {
-        searchString: `%${searchString}%`,
-      })
-      .orWhere('materia.nombre LIKE :searchString', {
-        searchString: `%${searchString}%`,
-      })
-      .orWhere('materia.codigo LIKE :searchString', {
-        searchString: `%${searchString}%`,
-      })
+      .where(
+        '(usuario.fullName LIKE :searchString OR materia.nombre LIKE :searchString OR CAST(materia.codigo AS TEXT) LIKE :searchString) AND usuario.id != :idUsuario',
+        {
+          searchString: `%${searchString}%`,
+          idUsuario: idUsuario,
+        },
+      )
       .getMany();
 
     return tutors.map((tutor) => ({
@@ -61,9 +82,15 @@ export class TutorService {
         nombre: materia.nombre,
       })),
       costo: tutor.costoPorHora,
+      calificacion: tutor.calificacion,
     }));
   }
 
+  /**
+   * Consulta un tutor por su id
+   * @param id
+   * @returns TutorDto
+   */
   async findOne(id: string): Promise<TutorDto> {
     const tutor = await this.tutorRepository.findOne({
       where: { id },
@@ -73,8 +100,6 @@ export class TutorService {
     if (!tutor) {
       throw new NotFoundException(`Tutor with ID ${id} not found`);
     }
-
-    console.log(tutor);
     return {
       id: tutor.id,
       nombre: tutor.usuario.fullName,
@@ -84,10 +109,15 @@ export class TutorService {
         nombre: materia.nombre,
       })),
       costo: tutor.costoPorHora,
+      calificacion: tutor.calificacion,
     };
   }
 
-  // Metodo para encontar una entidad de tutor por su id
+  /**
+   * Consulta un tutor por su id
+   * @param id
+   * @returns Tutor
+   */
   async findById(id: string): Promise<Tutor> {
     const tutor = await this.tutorRepository.findOne({
       where: { id },
@@ -104,5 +134,20 @@ export class TutorService {
 
   remove(id: number) {
     return `This action removes a #${id} tutor`;
+  }
+
+  /**
+   * Consulta un tutor por su id de usuario
+   * @param idUsuario
+   * @returns Tutor
+   */
+  async findByUsuarioId(idUsuario: string): Promise<Tutor> {
+    const tutor = await this.tutorRepository.findOne({
+      where: { usuario: { id: idUsuario } },
+    });
+    if (!tutor) {
+      throw new NotFoundException(`Tutor with ID ${idUsuario} not found`);
+    }
+    return tutor;
   }
 }
