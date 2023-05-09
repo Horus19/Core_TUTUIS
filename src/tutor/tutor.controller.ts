@@ -10,10 +10,11 @@ import {
 } from '@nestjs/common';
 import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
-import { UpdateTutorDto } from './dto/update-tutor.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
+import { TutorDto } from './dto/tutor-out.dto';
+import { UpdateTutorDto } from "./dto/update-tutor.dto";
 
 @Controller('tutor')
 export class TutorController {
@@ -49,9 +50,9 @@ export class TutorController {
     return this.tutorService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTutorDto: UpdateTutorDto) {
-    return this.tutorService.update(id, updateTutorDto);
+  @Patch()
+  update(@Body() updateTutorDto: UpdateTutorDto) {
+    return this.tutorService.update(updateTutorDto);
   }
 
   @Delete(':id')

@@ -54,12 +54,14 @@ export class TutorService {
    * @param id
    * @param updateTutorDto
    */
-  async update(id: string, updateTutorDto: UpdateTutorDto) {
-    const { materiasIds, descripcion, costoPorHora } = updateTutorDto;
+  async update(updateTutorDto: UpdateTutorDto) {
+    const { materias, descripcion, costo, id } = updateTutorDto;
     const tutor = await this.findById(id);
-    tutor.materias = await this.materiaService.findByIds(materiasIds);
+    tutor.materias = await this.materiaService.findByIds(
+      materias.map((m) => m.id),
+    );
     tutor.descripcion = descripcion;
-    tutor.costoPorHora = costoPorHora;
+    tutor.costoPorHora = costo;
     return this.tutorRepository.save(tutor);
   }
 
