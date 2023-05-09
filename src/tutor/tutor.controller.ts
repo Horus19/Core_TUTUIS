@@ -40,18 +40,18 @@ export class TutorController {
   }
 
   /**
-   * Obtener un tutor por su id
+   * Obtener un tutor por su id de usuario
    * @param id
    * @returns TutorDto
    */
-  @Get(':id')
+  @Get('usuario/:id')
   findOne(@Param('id') id: string) {
     return this.tutorService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTutorDto: UpdateTutorDto) {
-    return this.tutorService.update(+id, updateTutorDto);
+    return this.tutorService.update(id, updateTutorDto);
   }
 
   @Delete(':id')

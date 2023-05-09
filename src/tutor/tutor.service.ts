@@ -1,17 +1,13 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { CreateTutorDto } from './dto/create-tutor.dto';
-import { UpdateTutorDto } from './dto/update-tutor.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { TutorRepository } from './repository/tutor.repository';
-import { Tutor } from './entities/tutor.entity';
-import { MateriaService } from '../materia/materia.service';
-import { AuthService } from '../auth/auth.service';
-import { TutorDto } from './dto/tutor-out.dto';
-import { ValidRoles } from '../auth/interfaces/valid-roles';
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { CreateTutorDto } from "./dto/create-tutor.dto";
+import { UpdateTutorDto } from "./dto/update-tutor.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { TutorRepository } from "./repository/tutor.repository";
+import { Tutor } from "./entities/tutor.entity";
+import { MateriaService } from "../materia/materia.service";
+import { AuthService } from "../auth/auth.service";
+import { TutorDto } from "./dto/tutor-out.dto";
+import { ValidRoles } from "../auth/interfaces/valid-roles";
 
 /**
  * Servicio de tutor
@@ -54,6 +50,20 @@ export class TutorService {
   }
 
   /**
+   * Actualiza el perfil de un tutor
+   * @param id
+   * @param updateTutorDto
+   */
+  async update(id: string, updateTutorDto: UpdateTutorDto) {
+    const { materiasIds, descripcion, costoPorHora } = updateTutorDto;
+    const tutor = await this.findById(id);
+    tutor.materias = await this.materiaService.findByIds(materiasIds);
+    tutor.descripcion = descripcion;
+    tutor.costoPorHora = costoPorHora;
+    return this.tutorRepository.save(tutor);
+  }
+
+  /**
    * Consulta todos los tutores diferentes al usuario que realiza la consulta
    * @param searchString
    * @param idUsuario
@@ -87,18 +97,18 @@ export class TutorService {
   }
 
   /**
-   * Consulta un tutor por su id
+   * Consulta un tutor por su id de usuario
    * @param id
    * @returns TutorDto
    */
   async findOne(id: string): Promise<TutorDto> {
     const tutor = await this.tutorRepository.findOne({
-      where: { id },
+      where: { usuario: { id } },
       relations: ['materias', 'usuario'],
     });
 
     if (!tutor) {
-      throw new NotFoundException(`Tutor with ID ${id} not found`);
+      throw new NotFoundException(`Tutor with user ID ${id} not found`);
     }
     return {
       id: tutor.id,
@@ -126,10 +136,6 @@ export class TutorService {
       throw new NotFoundException(`Tutor with ID ${id} not found`);
     }
     return tutor;
-  }
-
-  update(id: number, updateTutorDto: UpdateTutorDto) {
-    return `This action updates a #${id} tutor`;
   }
 
   remove(id: number) {

@@ -12,6 +12,7 @@ import { TutorService } from '../tutor/tutor.service';
 import { Tutor } from '../tutor/entities/tutor.entity';
 import { TutoriaEstado } from './interfaces/estado-tutoria';
 import { MotivoRechazoDto } from './dto/motivo-rechazo.dto';
+import { SolicitudTutoriaDto } from "./dto/solicitud-tutoria.dto";
 
 @Injectable()
 export class TutoriaService {
@@ -89,13 +90,22 @@ export class TutoriaService {
    * @param tutorId
    * @returns Tutoria[]
    */
-  async findAllTutoringRequestsByTutor(tutorId: string) {
-    return this.tutoriaRepository.find({
-      where: {
+  async findAllTutoringRequestsByTutor(
+    tutorId: string,
+  ): Promise<SolicitudTutoriaDto[]> {
+    const tutorias = await this.tutoriaRepository
+      .createQueryBuilder('tutoria')
+      .leftJoinAndSelect('tutoria.estudiante', 'estudiante')
+      .leftJoinAndSelect('tutoria.materia', 'materia')
+      .leftJoinAndSelect('tutoria.tutor', 'tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where({
         tutor: { id: tutorId },
         estado: TutoriaEstado.PENDIENTE,
-      },
-    });
+      })
+      .getMany();
+
+    return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
 
   /**
@@ -132,12 +142,18 @@ export class TutoriaService {
    * @returns Tutoria[]
    */
   async findAllActiveTutoringByTutor(tutorId: string) {
-    return this.tutoriaRepository.find({
-      where: {
+    const tutorias = await this.tutoriaRepository
+      .createQueryBuilder('tutoria')
+      .leftJoinAndSelect('tutoria.estudiante', 'estudiante')
+      .leftJoinAndSelect('tutoria.materia', 'materia')
+      .leftJoinAndSelect('tutoria.tutor', 'tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where({
         tutor: { id: tutorId },
         estado: TutoriaEstado.ACEPTADA,
-      },
-    });
+      })
+      .getMany();
+    return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
 
   /**
@@ -182,5 +198,28 @@ export class TutoriaService {
 
   remove(id: number) {
     return `This action removes a #${id} tutoria`;
+  }
+
+  /// Metodo que convierte una lista de Tutoria a una lista de SolicitudTutoriaDto
+  /// @param tutorias Tutoria[]
+  /// @returns SolicitudTutoriaDto[]
+  private convertTutoriasToSolicitudTutoriaDto(tutorias: Tutoria[]) {
+    return tutorias.map((tutoria) => {
+      const solicitudTutoriaDto = new SolicitudTutoriaDto();
+
+      solicitudTutoriaDto.id = tutoria.id;
+      solicitudTutoriaDto.fechaSolicitud = tutoria.fechaSolicitud;
+      solicitudTutoriaDto.fechaTutoria = tutoria.fechaTutoria;
+      solicitudTutoriaDto.descripcion = tutoria.descripcion;
+      solicitudTutoriaDto.valorOferta = tutoria.valorOferta;
+      solicitudTutoriaDto.estudianteId = tutoria.estudiante.id;
+      solicitudTutoriaDto.estudiantenombre = tutoria.estudiante.fullName;
+      solicitudTutoriaDto.tutorId = tutoria.tutor.id;
+      solicitudTutoriaDto.tutorNombre = tutoria.tutor.usuario.fullName;
+      solicitudTutoriaDto.materiaId = tutoria.materia.id;
+      solicitudTutoriaDto.materiaNombre = tutoria.materia.nombre;
+
+      return solicitudTutoriaDto;
+    });
   }
 }
