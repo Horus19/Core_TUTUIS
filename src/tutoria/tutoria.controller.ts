@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { TutoriaService } from './tutoria.service';
-import { CreateTutoriaDto } from './dto/create-tutoria.dto';
-import { MotivoRechazoDto } from './dto/motivo-rechazo.dto';
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { TutoriaService } from "./tutoria.service";
+import { CreateTutoriaDto } from "./dto/create-tutoria.dto";
+import { MotivoRechazoDto } from "./dto/motivo-rechazo.dto";
+import { Auth } from "../auth/decorators/auth.decorator";
+import { ValidRoles } from "../auth/interfaces/valid-roles";
 
 @Controller('tutoria')
 export class TutoriaController {
@@ -74,5 +76,15 @@ export class TutoriaController {
   @Get('tutor/:idTutor/activas')
   findAllActivasByTutor(@Param('idTutor') idTutor: string) {
     return this.tutoriaService.findAllActiveTutoringByTutor(idTutor);
+  }
+
+  /**
+   * Finaliza una tutoria
+   * @param idTutoria
+   */
+  @Get('finalizar/:idTutoria')
+  @Auth(ValidRoles.TUTOR)
+  finalizarTutoria(@Param('idTutoria') idTutoria: string) {
+    return this.tutoriaService.finalizarTutoria(idTutoria);
   }
 }

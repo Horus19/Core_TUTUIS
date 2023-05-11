@@ -9,9 +9,11 @@ import { ConfigModule } from '@nestjs/config';
 import { MateriaModule } from './materia/materia.module';
 import { TutorModule } from './tutor/tutor.module';
 import { TutoriaModule } from './tutoria/tutoria.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     AuthModule,
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({

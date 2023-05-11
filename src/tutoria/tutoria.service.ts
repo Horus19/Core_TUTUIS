@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { CreateTutoriaDto } from './dto/create-tutoria.dto';
-import { UpdateTutoriaDto } from './dto/update-tutoria.dto';
 import { TutoriaRepository } from './repository/tutoria.repository';
 import { Tutoria } from './entities/tutoria.entity';
 import { MateriaService } from '../materia/materia.service';
@@ -12,7 +11,9 @@ import { TutorService } from '../tutor/tutor.service';
 import { Tutor } from '../tutor/entities/tutor.entity';
 import { TutoriaEstado } from './interfaces/estado-tutoria';
 import { MotivoRechazoDto } from './dto/motivo-rechazo.dto';
-import { SolicitudTutoriaDto } from "./dto/solicitud-tutoria.dto";
+import { SolicitudTutoriaDto } from './dto/solicitud-tutoria.dto';
+import { Cron } from '@nestjs/schedule';
+import { LessThan } from 'typeorm';
 
 @Injectable()
 export class TutoriaService {
@@ -71,8 +72,8 @@ export class TutoriaService {
 
   /**
    * Rechaza una solicitud de tutoria
-   * @param MotivoRechazoDto
    * @returns Tutoria
+   * @param motivoRechazoDto
    */
   async rechazarTutoria(motivoRechazoDto: MotivoRechazoDto) {
     const { tutoriaId, descripcion } = motivoRechazoDto;
@@ -103,6 +104,7 @@ export class TutoriaService {
         tutor: { id: tutorId },
         estado: TutoriaEstado.PENDIENTE,
       })
+      .orderBy('tutoria.fechaSolicitud', 'ASC')
       .getMany();
 
     return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
@@ -111,15 +113,22 @@ export class TutoriaService {
   /**
    * Metodo para obtener todas las solicitudes de tutoria como estudiante
    * @param studentId
-   * @returns Tutoria[]
+   * @returns SolicitudTutoriaDto[]
    */
   async findAllTutoringRequestsByStudent(studentId: string) {
-    return this.tutoriaRepository.find({
-      where: {
+    const tutorias = await this.tutoriaRepository
+      .createQueryBuilder('tutoria')
+      .leftJoinAndSelect('tutoria.estudiante', 'estudiante')
+      .leftJoinAndSelect('tutoria.materia', 'materia')
+      .leftJoinAndSelect('tutoria.tutor', 'tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where({
         estudiante: { id: studentId },
         estado: TutoriaEstado.PENDIENTE,
-      },
-    });
+      })
+      .orderBy('tutoria.fechaSolicitud', 'ASC')
+      .getMany();
+    return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
 
   /**
@@ -128,12 +137,19 @@ export class TutoriaService {
    * @returns Tutoria[]
    */
   async findAllCompletedTutoringByTutor(tutorId: string) {
-    return this.tutoriaRepository.find({
-      where: {
+    const tutorias = await this.tutoriaRepository
+      .createQueryBuilder('tutoria')
+      .leftJoinAndSelect('tutoria.estudiante', 'estudiante')
+      .leftJoinAndSelect('tutoria.materia', 'materia')
+      .leftJoinAndSelect('tutoria.tutor', 'tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where({
         tutor: { id: tutorId },
         estado: TutoriaEstado.COMPLETADA,
-      },
-    });
+      })
+      .orderBy('tutoria.fechaSolicitud', 'ASC')
+      .getMany();
+    return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
 
   /**
@@ -152,6 +168,7 @@ export class TutoriaService {
         tutor: { id: tutorId },
         estado: TutoriaEstado.ACEPTADA,
       })
+      .orderBy('tutoria.fechaSolicitud', 'ASC')
       .getMany();
     return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
@@ -159,15 +176,22 @@ export class TutoriaService {
   /**
    * Metodo para obtener todas las tutorias activas como estudiante
    * @param studentId
-   * @returns Tutoria[]
+   * @returns SolicitudTutoriaDto[]
    */
   async findAllActiveTutoringByStudent(studentId: string) {
-    return this.tutoriaRepository.find({
-      where: {
+    const tutorias = await this.tutoriaRepository
+      .createQueryBuilder('tutoria')
+      .leftJoinAndSelect('tutoria.estudiante', 'estudiante')
+      .leftJoinAndSelect('tutoria.materia', 'materia')
+      .leftJoinAndSelect('tutoria.tutor', 'tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where({
         estudiante: { id: studentId },
         estado: TutoriaEstado.ACEPTADA,
-      },
-    });
+      })
+      .orderBy('tutoria.fechaSolicitud', 'ASC')
+      .getMany();
+    return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
 
   /**
@@ -176,33 +200,27 @@ export class TutoriaService {
    * @returns Tutoria[]
    */
   async findAllCompletedTutoringByStudent(studentId: string) {
-    return this.tutoriaRepository.find({
-      where: {
+    const tutorias = await this.tutoriaRepository
+      .createQueryBuilder('tutoria')
+      .leftJoinAndSelect('tutoria.estudiante', 'estudiante')
+      .leftJoinAndSelect('tutoria.materia', 'materia')
+      .leftJoinAndSelect('tutoria.tutor', 'tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where({
         estudiante: { id: studentId },
         estado: TutoriaEstado.COMPLETADA,
-      },
-    });
+      })
+      .orderBy('tutoria.fechaSolicitud', 'ASC')
+      .getMany();
+    return this.convertTutoriasToSolicitudTutoriaDto(tutorias);
   }
 
-  findAll() {
-    return `This action returns all tutoria`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} tutoria`;
-  }
-
-  update(id: number, updateTutoriaDto: UpdateTutoriaDto) {
-    return `This action updates a #${id} tutoria`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} tutoria`;
-  }
-
-  /// Metodo que convierte una lista de Tutoria a una lista de SolicitudTutoriaDto
-  /// @param tutorias Tutoria[]
-  /// @returns SolicitudTutoriaDto[]
+  /**
+   * Metodo que convierte una lista de Tutoria a una lista de SolicitudTutoriaDto
+   * @param tutorias
+   * @returns SolicitudTutoriaDto[]
+   * @private
+   */
   private convertTutoriasToSolicitudTutoriaDto(tutorias: Tutoria[]) {
     return tutorias.map((tutoria) => {
       const solicitudTutoriaDto = new SolicitudTutoriaDto();
@@ -221,5 +239,47 @@ export class TutoriaService {
 
       return solicitudTutoriaDto;
     });
+  }
+
+  /**
+   * Tarea programada que se ejecuta todos los días a las 00:00 horas en la zona horaria de Bogotá.
+   * La tarea busca tutorías que estén en estado "aceptada" y cuya fecha de tutoría haya pasado.
+   * Luego, cambia el estado de estas tutorías a "completada".
+   */
+  @Cron('0 0 * * *', {
+    timeZone: 'America/Bogota',
+  }) // cada día a las 00:00 horas
+  async finalizarTutoriasVencidas() {
+    const tutoriasVencidas = await this.tutoriaRepository.find({
+      where: {
+        estado: TutoriaEstado.ACEPTADA,
+        fechaTutoria: LessThan(new Date()), // buscar tutorías vencidas
+      },
+    });
+    for (const tutoria of tutoriasVencidas) {
+      tutoria.estado = TutoriaEstado.COMPLETADA; // cambiar estado de la tutoría
+      await this.tutoriaRepository.save(tutoria);
+    }
+  }
+
+  /**
+   * Metodo para marcar una tutoria como finalizada
+   * @param tutoriaId
+   */
+  async finalizarTutoria(tutoriaId: string) {
+    const tutoria = await this.tutoriaRepository.findOne({
+      where: { id: tutoriaId },
+    });
+    // Valida que la fecha de la tutoria ya haya pasado y que la tutoria este en estado aceptada
+    if (
+      tutoria.fechaTutoria > new Date() ||
+      tutoria.estado !== TutoriaEstado.ACEPTADA
+    ) {
+      throw new BadRequestException(
+        'La tutoria no puede ser finalizada, ya que no ha pasado la fecha de la tutoria o la tutoria no esta en estado aceptada',
+      );
+    }
+    tutoria.estado = TutoriaEstado.COMPLETADA;
+    await this.tutoriaRepository.save(tutoria);
   }
 }
