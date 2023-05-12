@@ -16,5 +16,6 @@ import { MateriaModule } from '../materia/materia.module';
     AuthModule,
     MateriaModule,
   ],
+  exports: [TypeOrmModule, TutoriaService],
 })
 export class TutoriaModule {}

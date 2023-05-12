@@ -1,13 +1,17 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { CreateTutorDto } from "./dto/create-tutor.dto";
-import { UpdateTutorDto } from "./dto/update-tutor.dto";
-import { InjectRepository } from "@nestjs/typeorm";
-import { TutorRepository } from "./repository/tutor.repository";
-import { Tutor } from "./entities/tutor.entity";
-import { MateriaService } from "../materia/materia.service";
-import { AuthService } from "../auth/auth.service";
-import { TutorDto } from "./dto/tutor-out.dto";
-import { ValidRoles } from "../auth/interfaces/valid-roles";
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
+import { CreateTutorDto } from './dto/create-tutor.dto';
+import { UpdateTutorDto } from './dto/update-tutor.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TutorRepository } from './repository/tutor.repository';
+import { Tutor } from './entities/tutor.entity';
+import { MateriaService } from '../materia/materia.service';
+import { AuthService } from '../auth/auth.service';
+import { TutorDto } from './dto/tutor-out.dto';
+import { ValidRoles } from '../auth/interfaces/valid-roles';
 
 /**
  * Servicio de tutor
@@ -157,5 +161,16 @@ export class TutorService {
       throw new NotFoundException(`Tutor with ID ${idUsuario} not found`);
     }
     return tutor;
+  }
+
+  /**
+   * Actualiza la calificacion de un tutor
+   * @param id
+   * @param calificacion
+   */
+  async updateCalificacion(id: string, calificacion: number) {
+    const tutor = await this.findById(id);
+    tutor.calificacion = calificacion;
+    return this.tutorRepository.save(tutor);
   }
 }

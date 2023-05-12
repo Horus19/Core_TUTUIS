@@ -2,13 +2,14 @@ import {
   Column,
   Entity,
   JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+  ManyToOne, OneToMany,
+  PrimaryGeneratedColumn
+} from "typeorm";
 import { Materia } from '../../materia/entities/materia.entity';
 import { User } from '../../auth/entities/user.entity';
 import { Tutor } from '../../tutor/entities/tutor.entity';
 import { TutoriaEstado } from '../interfaces/estado-tutoria';
+import { Review } from "../../review/entities/review.entity";
 
 @Entity('tutorias')
 export class Tutoria {
@@ -48,4 +49,7 @@ export class Tutoria {
 
   @Column('text', { nullable: true })
   motivoRechazo: string;
+
+  @OneToMany(() => Review, (review) => review.tutoria)
+  reviews: Review[];
 }

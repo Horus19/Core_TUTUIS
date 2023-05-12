@@ -10,7 +10,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ValidRoles } from '../interfaces/valid-roles';
-import { Tutor } from '../../tutor/entities/tutor.entity';
+import { Review } from '../../review/entities/review.entity';
 
 @Entity('users')
 export class User {
@@ -49,6 +49,9 @@ export class User {
     default: false,
   })
   isBlocked: boolean;
+
+  @OneToMany(() => Review, (review) => review.estudiante)
+  reviews: Review[];
 
   @BeforeInsert()
   emailToLowerCase() {

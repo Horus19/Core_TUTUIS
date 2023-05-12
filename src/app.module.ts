@@ -10,6 +10,7 @@ import { MateriaModule } from './materia/materia.module';
 import { TutorModule } from './tutor/tutor.module';
 import { TutoriaModule } from './tutoria/tutoria.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     MateriaModule,
     TutorModule,
     TutoriaModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService, LoggerFactory],

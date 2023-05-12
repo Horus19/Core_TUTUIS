@@ -282,4 +282,15 @@ export class TutoriaService {
     tutoria.estado = TutoriaEstado.COMPLETADA;
     await this.tutoriaRepository.save(tutoria);
   }
+
+  /**
+   * Metodo para obtener una tutoria por id
+   * @returns Tutoria
+   * @param IdTutoria
+   */
+  async findOne(IdTutoria: string) {
+    return await this.tutoriaRepository.findOne({
+      where: { id: IdTutoria },
+    });
+  }
 }
