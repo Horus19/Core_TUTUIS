@@ -9,6 +9,7 @@ import { MateriaService } from '../materia/materia.service';
 import { AuthService } from '../auth/auth.service';
 import { TutoriaService } from '../tutoria/tutoria.service';
 import { TutoriaEstado } from '../tutoria/interfaces/estado-tutoria';
+import { ReviewDTO } from "./dto/review.dto";
 
 @Injectable()
 export class ReviewService {
@@ -58,15 +59,17 @@ export class ReviewService {
   /**
    * Obtiene todas las reviews por id de tutor
    * @param tutorId
-   * @returns Review[]
+   * @returns ReviewDTO[]
    */
   async findAllByTutorId(tutorId: string) {
     const reviews = await this.reviewRepository
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.tutoria', 'tutoria')
+      .leftJoinAndSelect('review.estudiante', 'estudiante')
       .where('tutoria.tutor = :tutorId', { tutorId })
       .getMany();
-    return reviews;
+    /// Retorna un arreglo de ReviewDTO
+    return this.reviewsToReviewsDTO(reviews);
   }
 
   findAll() {
@@ -83,5 +86,23 @@ export class ReviewService {
 
   remove(id: number) {
     return `This action removes a #${id} review`;
+  }
+
+  /**
+   * Convierte un arreglo de Review a ReviewDTO
+   * @param reviews Review[]
+   * @returns ReviewDTO[]
+   */
+  reviewsToReviewsDTO(reviews: Review[]) {
+    return reviews.map((review) => {
+      const { id, calificacion, comentario, tutoria, estudiante } = review;
+      const reviewDTO = new ReviewDTO();
+      reviewDTO.id = id;
+      reviewDTO.calificacion = calificacion;
+      reviewDTO.comentario = comentario;
+      reviewDTO.tutoria = tutoria.id;
+      reviewDTO.estudiante = estudiante.fullName;
+      return reviewDTO;
+    });
   }
 }
