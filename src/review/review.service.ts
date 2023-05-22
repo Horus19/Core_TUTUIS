@@ -9,7 +9,7 @@ import { MateriaService } from '../materia/materia.service';
 import { AuthService } from '../auth/auth.service';
 import { TutoriaService } from '../tutoria/tutoria.service';
 import { TutoriaEstado } from '../tutoria/interfaces/estado-tutoria';
-import { ReviewDTO } from "./dto/review.dto";
+import { ReviewDTO } from './dto/review.dto';
 
 @Injectable()
 export class ReviewService {
@@ -68,7 +68,6 @@ export class ReviewService {
       .leftJoinAndSelect('review.estudiante', 'estudiante')
       .where('tutoria.tutor = :tutorId', { tutorId })
       .getMany();
-    /// Retorna un arreglo de ReviewDTO
     return this.reviewsToReviewsDTO(reviews);
   }
 

@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
-import { TutoriaService } from "./tutoria.service";
-import { CreateTutoriaDto } from "./dto/create-tutoria.dto";
-import { MotivoRechazoDto } from "./dto/motivo-rechazo.dto";
-import { Auth } from "../auth/decorators/auth.decorator";
-import { ValidRoles } from "../auth/interfaces/valid-roles";
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { TutoriaService } from './tutoria.service';
+import { CreateTutoriaDto } from './dto/create-tutoria.dto';
+import { MotivoRechazoDto } from './dto/motivo-rechazo.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { ValidRoles } from '../auth/interfaces/valid-roles';
+import { MotivoCancelacionDto } from './dto/motivo-cancelacion.dto';
 
 @Controller('tutoria')
 export class TutoriaController {
@@ -87,4 +88,28 @@ export class TutoriaController {
   finalizarTutoria(@Param('idTutoria') idTutoria: string) {
     return this.tutoriaService.finalizarTutoria(idTutoria);
   }
+
+  /**
+   * Cancela una tutoria
+   * @param motivo
+   */
+  @Patch('cancelar')
+  @Auth(ValidRoles.ESTUDIANTE, ValidRoles.TUTOR)
+  cancelarTutoria(@Body() motivo: MotivoCancelacionDto) {
+    return this.tutoriaService.cancelarTutoria(motivo);
+  }
+
+  /**
+   * Cancela una solicitud de tutoria
+   * @param idTutoria
+   */
+  @Get('cancelar-solicitud/:idTutoria')
+  @Auth(ValidRoles.ESTUDIANTE)
+  cancelarSolicitudTutoria(@Param('idTutoria') idTutoria: string) {
+    return this.tutoriaService.cancelarSolicitudTutoria(idTutoria);
+  }
+
+  /**
+   *
+   */
 }

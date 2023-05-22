@@ -14,7 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import axios from 'axios';
+import { RabbitMQService } from './rabbit-mq/rabbit-mq.service';
 
 @Injectable()
 export class AuthService {
@@ -24,14 +24,20 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly rabbitMQService: RabbitMQService,
   ) {}
 
-  // Por defecto usuarios inactivos
+  /**
+   * Metodo asincrono encargado de crear un nuevo usuario en la base de datos
+   *  y enviar un correo electrónico de bienvenida al usuario recién registrado.
+   * @param createAuthDto
+   * @returns Usuario creado y token de autenticación
+   */
   async create(createAuthDto: CreateUserDto) {
     try {
       const { password, ...userData } = createAuthDto;
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = this.userRepository.create({
+      const user: User = this.userRepository.create({
         ...userData,
         password: hashedPassword,
       });
@@ -40,18 +46,14 @@ export class AuthService {
       await this.userRepository.save(user);
       const confirmationUrl = `http://${process.env.BASE_URL}/auth/activar-usuario/${validationToken}`;
       const token = this.getJwtToken({ id: user.id });
-      // await this.mailerService.sendWelcomeEmail({
-      //   email: user.email,
-      //   fullName: user.fullName,
-      //   url_confirmacion: confirmationUrl,
-      // });
-
-      await axios.post('http://172.18.0.2:3002/send-welcome-email', {
-        email: user.email,
-        fullName: user.fullName,
-        url_confirmacion: confirmationUrl,
-      });
-
+      await this.rabbitMQService.sendMessage(
+        'send-welcome-email',
+        JSON.stringify({
+          email: user.email,
+          fullName: user.fullName,
+          url_confirmacion: confirmationUrl,
+        }),
+      );
       return {
         ...user,
         token,
@@ -61,10 +63,19 @@ export class AuthService {
     }
   }
 
-  private getJwtToken(payload: JwtPayload) {
+  /**
+   *
+   * @param payload
+   * @returns
+   */
+  getJwtToken(payload: JwtPayload) {
     return this.jwtService.sign(payload);
   }
 
+  /**
+   *
+   * @param error
+   */
   private handleError(error: Error): never {
     this.logger.error(error.message, error.stack);
     throw new InternalServerErrorException(
@@ -73,12 +84,12 @@ export class AuthService {
     );
   }
 
-  async login(loginUserDto: LoginUserDto) {
+  async login(loginUserDto: LoginUserDto): Promise<LoginResponse> {
     const { email, password } = loginUserDto;
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'isActivate', 'fullName'],
+      select: ['id', 'email', 'password', 'isActivate', 'fullName', 'roles'],
     });
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
@@ -104,7 +115,12 @@ export class AuthService {
     };
   }
 
-  //Metodo para cambiar la contraseña, recibe como argumento el id del usuario,  la contraseña y la nueva contraseña
+  /**
+   * Metodo para cambiar la contraseña del usuario
+   * @param id
+   * @param changePasswordDto
+   * @returns usuario con la contraseña cambiada
+   */
   async changePassword(id: string, changePasswordDto: ChangePasswordDto) {
     const user = await this.userRepository.findOne({
       where: { id },
@@ -126,7 +142,12 @@ export class AuthService {
       token: this.getJwtToken({ id: user.id }),
     };
   }
-  // Activar usuario
+
+  /**
+   * Metodo para activar el usuario
+   * @param token
+   * @returns usuario activado
+   */
   async activateUser(token: string) {
     if (!token) {
       throw new BadRequestException('Token no proporcionado');
@@ -152,7 +173,24 @@ export class AuthService {
     }
   }
 
-  // TODO: implementar logica de checkAuthStatus
+  /**
+   *  Metodo encargado de bloquear o desbloquear un usuario
+   * @param id
+   * @returns usuario bloqueado/desbloqueado
+   */
+  async blockUser(id: string) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+    user.isBlocked = !user.isBlocked;
+    await this.userRepository.save(user);
+    return {
+      ...user,
+    };
+  }
 
   async checkAuthStatus(user: User) {
     return {

@@ -173,4 +173,18 @@ export class TutorService {
     tutor.calificacion = calificacion;
     return this.tutorRepository.save(tutor);
   }
+
+  /**
+   * Obtiene un usuario por su id de tutor
+   */
+  async findUsuarioByTutorId(idTutor: string) {
+    const tutor = await this.tutorRepository
+      .createQueryBuilder('tutor')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where('tutor.id = :idTutor', { idTutor })
+      .getOne();
+    if (!tutor)
+      throw new NotFoundException(`Tutor with ID ${idTutor} not found`);
+    return tutor.usuario;
+  }
 }

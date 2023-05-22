@@ -14,7 +14,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
 import { TutorDto } from './dto/tutor-out.dto';
-import { UpdateTutorDto } from "./dto/update-tutor.dto";
+import { UpdateTutorDto } from './dto/update-tutor.dto';
 
 @Controller('tutor')
 export class TutorController {
@@ -66,5 +66,13 @@ export class TutorController {
   @Get('usuario/:id')
   findByUsuarioId(@Param('id') id: string) {
     return this.tutorService.findByUsuarioId(id);
+  }
+
+  /**
+   * Obtener un usuario por su id de tutor
+   */
+  @Get('userByTutorID/:id')
+  findById(@Param('id') id: string) {
+    return this.tutorService.findUsuarioByTutorId(id);
   }
 }

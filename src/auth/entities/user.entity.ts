@@ -4,9 +4,7 @@ import {
   BeforeUpdate,
   Column,
   Entity,
-  JoinColumn,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ValidRoles } from '../interfaces/valid-roles';
