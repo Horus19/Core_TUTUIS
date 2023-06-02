@@ -1,20 +1,12 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-} from '@nestjs/common';
-import { TutorService } from './tutor.service';
-import { CreateTutorDto } from './dto/create-tutor.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User } from '../auth/entities/user.entity';
-import { TutorDto } from './dto/tutor-out.dto';
-import { UpdateTutorDto } from './dto/update-tutor.dto';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
+import { TutorService } from "./tutor.service";
+import { CreateTutorDto } from "./dto/create-tutor.dto";
+import { Auth } from "../auth/decorators/auth.decorator";
+import { GetUser } from "../auth/decorators/get-user.decorator";
+import { User } from "../auth/entities/user.entity";
+import { TutorDto } from "./dto/tutor-out.dto";
+import { UpdateTutorDto } from "./dto/update-tutor.dto";
+import { ValidRoles } from "../auth/interfaces/valid-roles";
 
 @Controller('tutor')
 export class TutorController {
@@ -74,5 +66,14 @@ export class TutorController {
   @Get('userByTutorID/:id')
   findById(@Param('id') id: string) {
     return this.tutorService.findUsuarioByTutorId(id);
+  }
+
+  /**
+   * Obtener listado de tutores por parte del administrador
+   * @param searchString
+   */
+  @Get('findByAdmin')
+  findAllAdmin(@Query('searchString') searchString: string) {
+    return this.tutorService.search(searchString);
   }
 }

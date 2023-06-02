@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { TutoriaService } from './tutoria.service';
 import { CreateTutoriaDto } from './dto/create-tutoria.dto';
 import { MotivoRechazoDto } from './dto/motivo-rechazo.dto';
@@ -19,7 +19,7 @@ export class TutoriaController {
    * Acepta una solicitud de tutoría
    */
   @Get('aceptar')
-  AceptarTutoria(@Param('idTutoria') id: string) {
+  AceptarTutoria(@Query('idTutoria') id: string) {
     return this.tutoriaService.acceptTutoria(id);
   }
 

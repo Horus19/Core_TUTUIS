@@ -137,6 +137,7 @@ export class TutorService {
   async findById(id: string): Promise<Tutor> {
     const tutor = await this.tutorRepository.findOne({
       where: { id },
+      relations: ['materias', 'usuario'],
     });
     if (!tutor) {
       throw new NotFoundException(`Tutor with ID ${id} not found`);
@@ -186,5 +187,40 @@ export class TutorService {
     if (!tutor)
       throw new NotFoundException(`Tutor with ID ${idTutor} not found`);
     return tutor.usuario;
+  }
+
+  /**
+   * Busqueda de tutores por parte del admin
+   * @param searchString
+   * @returns TutorDto[]
+   */
+  async search(searchString: string): Promise<TutorDto[]> {
+    const tutors = await this.tutorRepository
+      .createQueryBuilder('tutor')
+      .leftJoinAndSelect('tutor.materias', 'materia')
+      .leftJoinAndSelect('tutor.usuario', 'usuario')
+      .where(
+        '(usuario.fullName LIKE :searchString OR materia.nombre LIKE :searchString OR CAST(materia.codigo AS TEXT) LIKE :searchString)',
+        {
+          searchString: `%${searchString}%`,
+        },
+      )
+      .getMany();
+
+    return tutors.map((tutor) => ({
+      id: tutor.id,
+      nombre: tutor.usuario.fullName,
+      descripcion: tutor.descripcion,
+      materias: tutor.materias.map((materia) => ({
+        id: materia.id,
+        nombre: materia.nombre,
+        codigo: materia.codigo,
+        descripcion: materia.descripcion,
+        activo: materia.activo,
+        codigoNombre: `${materia.codigo} - ${materia.nombre}`,
+      })),
+      costo: tutor.costoPorHora,
+      calificacion: tutor.calificacion,
+    }));
   }
 }

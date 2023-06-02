@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { CreateTutoriaDto } from './dto/create-tutoria.dto';
 import { TutoriaRepository } from './repository/tutoria.repository';
 import { Tutoria } from './entities/tutoria.entity';
@@ -15,6 +20,7 @@ import { SolicitudTutoriaDto } from './dto/solicitud-tutoria.dto';
 import { Cron } from '@nestjs/schedule';
 import { LessThan } from 'typeorm';
 import { MotivoCancelacionDto } from './dto/motivo-cancelacion.dto';
+import { RabbitMQService } from '../auth/rabbit-mq/rabbit-mq.service';
 
 @Injectable()
 export class TutoriaService {
@@ -25,6 +31,7 @@ export class TutoriaService {
     private readonly tutorService: TutorService,
     private readonly materiaService: MateriaService,
     private readonly authService: AuthService,
+    private readonly rabbitmqService: RabbitMQService,
   ) {}
 
   /**
@@ -64,6 +71,15 @@ export class TutoriaService {
     tutoria.fechaTutoria = fechaTutoria;
     tutoria.descripcion = descripcion;
     tutoria.valorOferta = valorOferta;
+    /// Envia mensaje a la cola de RabbitMQ para que el socket service envie la notificacion
+    await this.rabbitmqService.sendMessage(
+      'send-notification',
+      JSON.stringify({
+        title: 'Nueva solicitud de tutoria',
+        body: `Tienes una nueva solicitud de tutoria para la materia ${materia.nombre}`,
+        to: tutor.usuario.id,
+      }),
+    );
     return this.tutoriaRepository.save(tutoria);
   }
 
@@ -75,9 +91,18 @@ export class TutoriaService {
   async acceptTutoria(tutoriaId: string) {
     const tutoria = await this.tutoriaRepository.findOne({
       where: { id: tutoriaId },
+      relations: ['estudiante', 'materia'],
     });
     tutoria.estado = TutoriaEstado.ACEPTADA;
-    //TODO: Agregar logica para notificar al estudiante
+    /// Envia mensaje a la cola de RabbitMQ para que el socket service envie la notificacion
+    await this.rabbitmqService.sendMessage(
+      'send-notification',
+      JSON.stringify({
+        title: 'Solicitud de tutoria aceptada',
+        body: `Tu solicitud de tutoria para la materia ${tutoria.materia.nombre} ha sido aceptada`,
+        to: tutoria.estudiante.id,
+      }),
+    );
     return this.tutoriaRepository.save(tutoria);
   }
 
@@ -90,10 +115,19 @@ export class TutoriaService {
     const { tutoriaId, descripcion } = motivoRechazoDto;
     const tutoria = await this.tutoriaRepository.findOne({
       where: { id: tutoriaId },
+      relations: ['estudiante'],
     });
     tutoria.estado = TutoriaEstado.RECHAZADA;
     tutoria.motivoRechazo = descripcion;
-    //TODO: Agregar logica para notificar al estudiante
+    /// Envia mensaje a la cola de RabbitMQ para que el socket service envie la notificacion
+    await this.rabbitmqService.sendMessage(
+      'send-notification',
+      JSON.stringify({
+        title: 'Solicitud de tutoria rechazada',
+        body: `Tu solicitud de tutoria para la materia ${tutoria.materia.nombre} ha sido rechazada`,
+        to: tutoria.estudiante.id,
+      }),
+    );
     return this.tutoriaRepository.save(tutoria);
   }
 
@@ -314,6 +348,7 @@ export class TutoriaService {
   async cancelarTutoria(motivoCancelacionDto: MotivoCancelacionDto) {
     const tutoria = await this.tutoriaRepository.findOne({
       where: { id: motivoCancelacionDto.tutoriaId },
+      relations: ['estudiante'],
     });
     // Valida que la fecha de la tutoria no haya pasado y que la tutoria este en estado aceptada
     if (
@@ -326,7 +361,15 @@ export class TutoriaService {
     }
     tutoria.estado = TutoriaEstado.CANCELADA;
     tutoria.motivoCancelacion = motivoCancelacionDto.descripcion;
-    ///Notificacion de cancelacion de tutoria
+    /// Se envia la notificacion de cancelacion de tutoria
+    await this.rabbitmqService.sendMessage(
+      'send-notification',
+      JSON.stringify({
+        title: 'Tutoria cancelada',
+        body: `La tutoria con el estudiante ${tutoria.estudiante.fullName} ha sido cancelada por el tutor`,
+        to: tutoria.estudiante.id,
+      }),
+    );
     await this.tutoriaRepository.save(tutoria);
   }
 

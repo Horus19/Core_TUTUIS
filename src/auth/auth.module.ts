@@ -23,6 +23,13 @@ import { RabbitMQService } from './rabbit-mq/rabbit-mq.service';
       }),
     }),
   ],
-  exports: [TypeOrmModule, JwtStrategy, PassportModule, JwtModule, AuthService],
+  exports: [
+    TypeOrmModule,
+    JwtStrategy,
+    PassportModule,
+    JwtModule,
+    AuthService,
+    RabbitMQService,
+  ],
 })
 export class AuthModule {}
